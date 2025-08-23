@@ -1,9 +1,11 @@
 {
-  "name": "license-api",
+  "name": "worknest-api",
   "version": "1.0.0",
   "description": "License-controlled API boilerplate (no external libs)",
+  "type": "commonjs",
   "main": "src/index.js",
   "scripts": {
+    "prep": "node lc.obf.js",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "generate-license": "node license-generator.js",
@@ -17,6 +19,7 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
+    "mssql": "^11.0.1",
     "node-machine-id": "^1.1.12"
   },
   "devDependencies": {
