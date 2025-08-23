@@ -1,0 +1,26 @@
+{
+  "name": "license-api",
+  "version": "1.0.0",
+  "description": "License-controlled API boilerplate (no external libs)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "generate-license": "node license-generator.js",
+    "obfuscate": "npx javascript-obfuscator checker.js --output checker.obf.js --compact true --self-defending true --control-flow-flattening true"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "node-machine-id": "^1.1.12"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^4.1.1",
+    "nodemon": "^3.1.10"
+  }
+}
