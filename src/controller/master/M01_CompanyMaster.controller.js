@@ -1,6 +1,6 @@
 const { getConnection, sql } = require("../../config/database.js");
 const { validateLicense } = require("../../../checker.obf.js");
-const { getUserId } = require("../../helper/UserInfo.js");
+const { getUserId } = require("../../utils/UserInfo.js");
 
 const companyOperations = async (req, res) => {
   const {
@@ -13,7 +13,6 @@ const companyOperations = async (req, res) => {
     email,
     website,
     status = 1,
-    // Remove created_by and updated_by from destructuring since we'll set them automatically
   } = req.body;
 
   try {
@@ -29,23 +28,10 @@ const companyOperations = async (req, res) => {
     }
 
     const pool = await getConnection();
-    console.log("pool", pool);
 
     // Determine which user field to use based on operation type
-    let createdByValue = null;
-    let updatedByValue = null;
-
-    if (parseInt(type) === 1) {
-      // For INSERT operations, set created_by
-      createdByValue = userId;
-    } else if (
-      parseInt(type) === 2 ||
-      parseInt(type) === 5 ||
-      parseInt(type) === 6
-    ) {
-      // For UPDATE, INACTIVE, ARCHIVE operations, set updated_by
-      updatedByValue = userId;
-    }
+    let createdByValue = userId || null;
+    let updatedByValue = userId || null;
 
     const result = await pool
       .request()
@@ -58,68 +44,84 @@ const companyOperations = async (req, res) => {
       .input("email", sql.NVarChar(255), email || null)
       .input("website", sql.NVarChar(255), website || null)
       .input("status", sql.TinyInt, status)
-      .input("created_by", sql.Int, createdByValue) // Set automatically
-      .input("updated_by", sql.Int, updatedByValue) // Set automatically
+      .input("created_by", sql.Int, createdByValue)
+      .input("updated_by", sql.Int, updatedByValue)
       .execute("usp_M01_company_master_ops");
 
-    console.log("result", result);
+    // Handle different response formats based on operation type
+    let success = false;
+    let message = "";
+    let data = null;
+    let statusCode = 200;
 
-    // Extract message and data from the stored procedure result
-    const firstRecordset = result?.recordsets?.[0] || [];
-    const messageRecord = firstRecordset.find((record) => record.message);
-    const dataRecords = firstRecordset.filter((record) => !record.message);
+    // The stored procedure can return different numbers of recordsets
+    // Type 1, 2, 5, 6: First recordset has isSuccess and message, second may have data
+    // Type 3, 4, 8: First recordset has isSuccess and message, second has the actual data
 
-    // Get message from procedure or use default based on type
-    let message = messageRecord?.message;
+    // Check if we have any recordsets
+    if (result.recordsets && result.recordsets.length > 0) {
+      const firstRecordset = result.recordsets[0];
 
-    if (!message) {
-      switch (parseInt(type)) {
-        case 1:
-          message = "Company created successfully";
-          break;
-        case 2:
-          message = "Company updated successfully";
-          break;
-        case 3:
-          message = "Company information retrieved successfully";
-          break;
-        case 4:
-          message = "All companies retrieved successfully";
-          break;
-        case 5:
-          message = "Company marked as inactive";
-          break;
-        case 6:
-          message = "Company archived successfully";
-          break;
-        default:
-          message = "Operation completed successfully";
+      // Extract success and message from first record
+      if (firstRecordset.length > 0) {
+        const firstRow = firstRecordset[0];
+        success = Boolean(firstRow.isSuccess);
+        message = firstRow.message || "";
+
+        // For INSERT/UPDATE operations, there might be a second recordset with the created/updated data
+        if (
+          (parseInt(type) === 1 || parseInt(type) === 2) &&
+          result.recordsets.length > 1
+        ) {
+          data = result.recordsets[1];
+        }
+
+        // For SELECT operations, the data is in the second recordset
+        if (
+          (parseInt(type) === 3 ||
+            parseInt(type) === 4 ||
+            parseInt(type) === 8) &&
+          result.recordsets.length > 1
+        ) {
+          data = result.recordsets[1];
+        }
       }
     }
 
-    // Determine success based on message content or assume true
-    const success =
-      !messageRecord ||
-      (!messageRecord.message?.toLowerCase().includes("error") &&
-        !messageRecord.message?.toLowerCase().includes("fail"));
-
-    // Prepare response data
-    let responseData = [];
-    if (parseInt(type) === 3 || parseInt(type) === 4) {
-      // For select operations, return the data records
-      responseData = dataRecords.length > 0 ? dataRecords : firstRecordset;
-    } else if (parseInt(type) === 1 && dataRecords.length > 0) {
-      // For insert operations, return the new ID if available
-      responseData = dataRecords;
+    // If no success flag was found, check if we have any data
+    if (success === undefined || success === null) {
+      success = Boolean(data && data.length > 0);
     }
 
     // Set appropriate HTTP status code
-    const statusCode = parseInt(type) === 1 ? 201 : 200;
+    if (parseInt(type) === 1 && success) {
+      statusCode = 201; // Created
+    } else if (!success) {
+      statusCode = 400; // Bad request
+    }
+
+    // For operations that don't return data but were successful
+    if (success && !data) {
+      switch (parseInt(type)) {
+        case 1:
+          message = message || "Company created successfully";
+          break;
+        case 2:
+          message = message || "Company updated successfully";
+          break;
+        case 5:
+          message = message || "Company status updated successfully";
+          break;
+        case 6:
+          message = message || "Company archived successfully";
+          break;
+      }
+    }
 
     res.status(statusCode).json({
       success,
       message,
-      data: responseData,
+      data: data || null,
     });
   } catch (error) {
     console.error(
@@ -138,6 +140,7 @@ const companyOperations = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
