@@ -44,11 +44,11 @@ app.use((req, res) => {
   });
 });
 
-// const PORT = process.env.PORT || 3000;
-// const HOST = "192.168.1.53";
-// app.listen(PORT, HOST, () =>
-//   console.log(`🚀 API started on port ${HOST} and ${PORT}`)
-// );
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 API started on port ${PORT}`));
+const HOST = "192.168.1.53";
+app.listen(PORT, HOST, () =>
+  console.log(`🚀 API started on port ${HOST} and ${PORT}`)
+);
+
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => console.log(`🚀 API started on port ${PORT}`));
