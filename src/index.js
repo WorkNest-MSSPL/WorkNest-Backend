@@ -1,12 +1,13 @@
 const express = require("express");
+const cors = require("cors");
 const { validateLicense } = require("../checker.obf"); // obfuscated function
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 //Import Routes
 const masterRoutes = require("./routes/master.routes.js");
 
 //middleware to process json and urlencoded data
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,7 +25,7 @@ app.get("/", (req, res) => res.send("✅ API running!"));
 app.get("/test", (req, res) => res.send("✅ Another route validated!"));
 
 //Master Routes
-app.use("/api", masterRoutes);
+app.use("/api/master", masterRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -43,4 +44,11 @@ app.use((req, res) => {
   });
 });
 
+// const PORT = process.env.PORT || 3000;
+// const HOST = "192.168.1.53";
+// app.listen(PORT, HOST, () =>
+//   console.log(`🚀 API started on port ${HOST} and ${PORT}`)
+// );
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 API started on port ${PORT}`));

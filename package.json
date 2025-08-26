@@ -8,6 +8,7 @@
     "prep": "node lc.obf.js",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "build": "esbuild src/index.js --bundle --platform=node --outfile=dist/bundle.js",
     "generate-license": "node license-generator.js",
     "obfuscate": "npx javascript-obfuscator checker.js --output checker.obf.js --compact true --self-defending true --control-flow-flattening true"
   },
@@ -15,8 +16,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^17.2.1",
+    "esbuild": "^0.25.9",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
     "mssql": "^11.0.1",
