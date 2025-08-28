@@ -10,9 +10,13 @@ const {
 const {
   getEmployeeProfileByCode,
 } = require("../controller/employee/GetEmpByID.controller.js");
+const {
+  getAllEmployees,
+} = require("../controller/employee/GetAllEmployee.controller.js");
 
 router.post("/register", registerEmployee);
 router.post("/profile", updateEmployeeProfile);
-router.get("/profile", getEmployeeProfileByCode);
+router.post("/getById", getEmployeeProfileByCode);
+router.get("/getAll", getAllEmployees);
 
 module.exports = router;
