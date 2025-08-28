@@ -1,5 +1,7 @@
 const { getConnection, sql } = require("../../config/database.js");
-const { validateLicense } = require("../../../checker.obf.js");
+const path = require("path");
+const { validateLicense } = require(path.join(__dirname, "checker.obf"));
+
 const { getUserId } = require("../../utils/UserInfo.js");
 
 const policyOperations = async (req, res) => {
