@@ -6,7 +6,7 @@
   "main": "src/index.js",
   "scripts": {
     "prep": "node lc.obf.js",
-    "start": "node src/index.js",
+    "start": "node dist/bundle.js",
     "dev": "nodemon src/index.js",
     "build": "esbuild src/index.js --bundle --platform=node --outfile=dist/bundle.js",
     "generate-license": "node license-generator.js",

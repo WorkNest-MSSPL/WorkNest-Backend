@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const { validateLicense } = require("../checker.obf"); // obfuscated function
+const path = require("path");
+const { validateLicense } = require(path.join(__dirname, "checker.obf"));
+
+// obfuscated function
 const app = express();
 
 //Import Routes
@@ -50,7 +53,7 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 3000;
 const HOST = "192.168.1.53";
-app.listen(PORT, HOST, () =>
+app.listen(PORT, () =>
   console.log(`🚀 API started on port ${HOST} and ${PORT}`)
 );
 
