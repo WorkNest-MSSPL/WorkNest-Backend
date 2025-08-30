@@ -72,6 +72,12 @@ const {
 const {
   beatOperations,
 } = require("../controller/master/M24_BeatMaster.controller.js");
+const {
+  projectMasterOperations,
+} = require("../controller/master/M25_ProjectMaster.controller.js");
+const {
+  projectMembersOperations,
+} = require("../controller/master/M26_ProjectMembers.controller.js");
 
 router.post("/company", companyOperations);
 router.post("/department", departmentOperations);
@@ -98,5 +104,7 @@ router.post("/zone", zoneOperations);
 router.post("/ward", wardOperations);
 router.post("/area", areaOperations);
 router.post("/beat", beatOperations);
+router.post("/project", projectMasterOperations);
+router.post("/projectMembers", projectMembersOperations);
 
 module.exports = router;
