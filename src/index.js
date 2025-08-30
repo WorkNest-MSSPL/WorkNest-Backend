@@ -9,6 +9,7 @@ const app = express();
 //Import Routes
 const masterRoutes = require("./routes/master.routes.js");
 const employeeRoutes = require("./routes/employee.routes.js");
+const taskRoutes = require("./routes/task.routes.js");
 
 //middleware to process json and urlencoded data
 app.use(cors());
@@ -33,6 +34,9 @@ app.use("/api/master", masterRoutes);
 
 //Employee Routes
 app.use("/api/employee", employeeRoutes);
+
+//Task Routes
+app.use("/api/task", taskRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
