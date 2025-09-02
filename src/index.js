@@ -10,6 +10,7 @@ const app = express();
 const masterRoutes = require("./routes/master.routes.js");
 const employeeRoutes = require("./routes/employee.routes.js");
 const taskRoutes = require("./routes/task.routes.js");
+const visitorRoutes = require("./routes/visitor.routes.js");
 
 //middleware to process json and urlencoded data
 app.use(cors());
@@ -37,6 +38,9 @@ app.use("/api/employee", employeeRoutes);
 
 //Task Routes
 app.use("/api/task", taskRoutes);
+
+//Visitor Routes
+app.use("/api/visitor", visitorRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
