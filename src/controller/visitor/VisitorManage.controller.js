@@ -64,7 +64,7 @@ const visitorManageOperations = async (req, res) => {
         sql.NVarChar(100),
         government_id_number || null
       )
-      .input("photo_url", sql.NVarChar(500), '' || null)
+      .input("photo_url", sql.NVarChar(500), "" || null)
       .input("vehicle_number", sql.NVarChar(50), vehicle_number || null)
       .input("vehicle_type", sql.NVarChar(50), vehicle_type || null)
       .input("parking_slot", sql.NVarChar(50), parking_slot || null)
@@ -122,18 +122,24 @@ const visitorManageOperations = async (req, res) => {
     if (parseInt(type) === 1 && success) {
       statusCode = 201; // Created for first-time registration
       console.log(data.visitor_id);
-      
 
       // Call Python API only if visitor was successfully created and we have a visitor_id
       if (data && data.visitor_id && base64Image) {
         try {
-          console.log(666)
-          if (!base64Image || typeof base64Image !== 'string' || base64Image.length < 100) {
+          console.log(666);
+          if (
+            !base64Image ||
+            typeof base64Image !== "string" ||
+            base64Image.length < 100
+          ) {
             console.log("Invalid base64 image data");
           }
-          const cleanedBase64Image = base64Image.replace(/^data:image\/\w+;base64,/, '');
+          const cleanedBase64Image = base64Image.replace(
+            /^data:image\/\w+;base64,/,
+            ""
+          );
 
-          console.log("cleanedBase64Image",cleanedBase64Image);
+          console.log("cleanedBase64Image", cleanedBase64Image);
           const response = await axios.post(
             "https://worknestpython.mssplonline.com/VisitorRegistration",
             {
@@ -148,12 +154,10 @@ const visitorManageOperations = async (req, res) => {
           );
 
           console.log(response);
-          
 
           // Get the result from the external API
           const pythonApiResult = response.data;
           console.log(pythonApiResult);
-          
 
           // Add Python API response to our data
           data.python_api_response = pythonApiResult;

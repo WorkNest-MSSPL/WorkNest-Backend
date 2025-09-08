@@ -12,6 +12,7 @@ const employeeRoutes = require("./routes/employee.routes.js");
 const taskRoutes = require("./routes/task.routes.js");
 const visitorRoutes = require("./routes/visitor.routes.js");
 const leaveRoutes = require("./routes/leave.routes.js");
+const jobRoutes = require("./routes/job.routes.js");
 
 //middleware to process json and urlencoded data
 app.use(cors());
@@ -45,6 +46,9 @@ app.use("/api/visitor", visitorRoutes);
 //Leave Routes
 app.use("/api/leave", leaveRoutes);
 
+//Job Routes
+app.use("/api/job", jobRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -63,8 +67,10 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-// const HOST = "192.168.1.45";
-app.listen(PORT, () => console.log(`🚀 API started on port  and ${PORT}`));
+const HOST = "192.168.1.53";
+app.listen(PORT, HOST, () =>
+  console.log(`🚀 API started on port  and ${PORT}`)
+);
 
 // const PORT = process.env.PORT || 3000;
 // app.listen(PORT, () => console.log(`🚀 API started on port ${PORT}`));
