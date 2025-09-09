@@ -3,7 +3,7 @@ const path = require("path");
 const { validateLicense } = require(path.join(__dirname, "checker.obf"));
 const { getUserId } = require("../../utils/UserInfo.js");
 
-const jobApplicationsOperations = async (req, res) => {
+const jobApplicationOperations = async (req, res) => {
   const {
     type,
     application_id,
@@ -14,7 +14,8 @@ const jobApplicationsOperations = async (req, res) => {
     resume_url,
     cover_letter,
     application_date,
-    status = 1,
+    status,
+    skills = [],
   } = req.body;
 
   try {
@@ -31,20 +32,30 @@ const jobApplicationsOperations = async (req, res) => {
 
     const pool = await getConnection();
 
+    // Create TVP for skills
+    const skillsTVP = new sql.Table();
+    skillsTVP.columns.add("skill_id", sql.Int);
+    skillsTVP.columns.add("skill_level", sql.NVarChar(50));
+
+    // Add skills to TVP
+    skills.forEach((skill) => {
+      skillsTVP.rows.add(skill.skill_id, skill.skill_level);
+    });
+
     const result = await pool
       .request()
-      .input("Type", sql.Int, type)
+      .input("type", sql.Int, type)
       .input("application_id", sql.Int, application_id || null)
       .input("job_posting_id", sql.Int, job_posting_id || null)
-      .input("candidate_name", sql.NVarChar(255), candidate_name || null)
-      .input("email", sql.NVarChar(255), email || null)
-      .input("phone", sql.NVarChar(50), phone || null)
-      .input("resume_url", sql.NVarChar(sql.MAX), resume_url || null)
+      .input("candidate_name", sql.NVarChar(200), candidate_name || null)
+      .input("email", sql.NVarChar(200), email || null)
+      .input("phone", sql.NVarChar(20), phone || null)
+      .input("resume_url", sql.NVarChar(500), resume_url || null)
       .input("cover_letter", sql.NVarChar(sql.MAX), cover_letter || null)
-      .input("application_date", sql.DateTime, application_date || null)
-      .input("status", sql.TinyInt, status)
-      .input("performed_by", sql.Int, userId)
-      .execute("usp_R03_job_applications_ops");
+      .input("application_date", sql.Date, application_date || null)
+      .input("status", sql.NVarChar(20), status || null)
+      .input("skills", skillsTVP)
+      .execute("USP_ManageJobApplications");
 
     // Handle response based on operation type
     let success = false;
@@ -54,89 +65,70 @@ const jobApplicationsOperations = async (req, res) => {
 
     // Check if we have any recordsets
     if (result.recordsets && result.recordsets.length > 0) {
-      // For INSERT operations (Type 1), there are 2 recordsets: [success_message, inserted_data]
-      if (parseInt(type) === 1 && result.recordsets.length >= 2) {
-        const successRecordset = result.recordsets[0];
-        const dataRecordset = result.recordsets[1];
+      const firstRecordset = result.recordsets[0];
 
-        if (successRecordset.length > 0) {
-          const successRow = successRecordset[0];
-          if (
-            successRow.hasOwnProperty("isSuccess") &&
-            successRow.hasOwnProperty("message")
-          ) {
-            success = Boolean(successRow.isSuccess);
-            message = successRow.message || "";
-          }
-        }
-
-        if (dataRecordset.length > 0) {
-          data = dataRecordset;
-        }
+      // For type 1 (insert), we get application_id directly
+      if (type === 1 && firstRecordset.length > 0) {
+        success = true;
+        data = firstRecordset[0];
+        message = "Application created successfully";
+        statusCode = 201;
       }
-      // For other operations
-      else {
-        const firstRecordset = result.recordsets[0];
+      // For type 2, 4 (update operations)
+      else if ((type === 2 || type === 4) && firstRecordset.length > 0) {
+        success = true;
+        message =
+          firstRecordset[0].message || "Operation completed successfully";
+      }
+      // For type 3, 5, 6 (select operations)
+      else if (
+        (type === 3 || type === 5 || type === 6) &&
+        firstRecordset.length > 0
+      ) {
+        success = true;
 
-        if (firstRecordset.length > 0) {
-          const firstRow = firstRecordset[0];
-
-          // Check if this is a success/message response or actual data
-          if (
-            firstRow.hasOwnProperty("isSuccess") &&
-            firstRow.hasOwnProperty("message")
-          ) {
-            success = Boolean(firstRow.isSuccess);
-            message = firstRow.message || "";
+        // Parse skills JSON string to array
+        const applications = firstRecordset.map((app) => {
+          if (app.skills) {
+            try {
+              app.skills = JSON.parse(app.skills);
+            } catch (e) {
+              app.skills = [];
+            }
           } else {
-            // This is actual data from SELECT operations
-            success = true;
-            data = firstRecordset;
+            app.skills = [];
           }
-        }
+          return app;
+        });
+
+        data = type === 3 ? applications[0] : applications;
+        message = "Data retrieved successfully";
       }
     }
 
-    // If no success flag was found but we have data, consider it successful
-    if (success === false && data && data.length > 0) {
+    // Handle empty results for select operations
+    if (
+      (type === 3 || type === 5 || type === 6) &&
+      (!data || (Array.isArray(data) && data.length === 0))
+    ) {
       success = true;
+      message = "No applications found";
+      data = type === 3 ? null : [];
     }
 
-    // Handle specific case where update fails due to record not found
-    if (parseInt(type) === 2 && !success && message.includes("not found")) {
-      statusCode = 404;
-    }
-
-    // Set appropriate HTTP status code
-    if (parseInt(type) === 1 && success) {
-      statusCode = 201; // Created
-    } else if (!success) {
-      statusCode = success === false && statusCode === 200 ? 400 : statusCode;
-    }
-
-    // For operations that don't return data but were successful
-    if (success && !data) {
-      switch (parseInt(type)) {
-        case 1:
-          message = message || "Job application submitted successfully";
-          break;
-        case 2:
-          message = message || "Job application updated successfully";
-          break;
-        case 5:
-          message = message || "Application status updated successfully";
-          break;
-      }
+    // Set appropriate HTTP status code for errors
+    if (!success) {
+      statusCode = 400;
     }
 
     res.status(statusCode).json({
       success,
       message,
-      data: data || null,
+      data,
     });
   } catch (error) {
     console.error(
-      "Error executing usp_R03_job_applications_ops procedure:",
+      "Error executing USP_ManageJobApplications procedure:",
       error
     );
 
@@ -148,43 +140,14 @@ const jobApplicationsOperations = async (req, res) => {
       });
     }
 
-    // Handle SQL constraint violations
-    if (error.number === 547 || error.message?.includes("constraint")) {
-      let constraintMessage =
-        "Cannot perform operation due to constraint violation";
-
-      if (error.message?.includes("job_posting_id")) {
-        constraintMessage = "Invalid job posting selected";
-      } else if (error.message?.includes("email")) {
-        constraintMessage = "Email validation failed";
-      }
-
-      return res.status(400).json({
-        success: false,
-        message: constraintMessage,
-      });
-    }
-
-    // Handle duplicate applications
+    // Handle database validation errors
     if (
-      error.number === 2601 ||
-      error.number === 2627 ||
-      error.message?.includes("duplicate")
+      error.message?.includes("invalid") ||
+      error.message?.includes("Invalid")
     ) {
       return res.status(400).json({
         success: false,
-        message: "You have already applied for this position",
-      });
-    }
-
-    // Handle required field validation
-    if (
-      error.message?.includes("NULL") ||
-      error.message?.includes("required")
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Required fields are missing",
+        message: error.message,
       });
     }
 
@@ -197,5 +160,5 @@ const jobApplicationsOperations = async (req, res) => {
 };
 
 module.exports = {
-  jobApplicationsOperations,
+  jobApplicationOperations,
 };

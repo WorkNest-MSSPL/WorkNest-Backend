@@ -8,11 +8,11 @@ const {
   jobPostingsOperations,
 } = require("../controller/job/R02_JobPosting.controller.js");
 const {
-  jobApplicationsOperations,
+  jobApplicationOperations,
 } = require("../controller/job/R03_JobApplications.controller.js");
 
 router.post("/job-category", jobCategoryOperations);
 router.post("/job-postings", jobPostingsOperations);
-router.post("/job-applications", jobApplicationsOperations);
+router.post("/job-applications", jobApplicationOperations);
 
 module.exports = router;

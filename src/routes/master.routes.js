@@ -78,6 +78,9 @@ const {
 const {
   projectMembersOperations,
 } = require("../controller/master/M26_ProjectMembers.controller.js");
+const {
+  skillOperations,
+} = require("../controller/master/R05_SkillMaster.controller.js");
 
 router.post("/company", companyOperations);
 router.post("/department", departmentOperations);
@@ -106,5 +109,6 @@ router.post("/area", areaOperations);
 router.post("/beat", beatOperations);
 router.post("/project", projectMasterOperations);
 router.post("/projectMembers", projectMembersOperations);
+router.post("/skills", skillOperations);
 
 module.exports = router;
