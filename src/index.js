@@ -13,6 +13,7 @@ const taskRoutes = require("./routes/task.routes.js");
 const visitorRoutes = require("./routes/visitor.routes.js");
 const leaveRoutes = require("./routes/leave.routes.js");
 const jobRoutes = require("./routes/job.routes.js");
+const attendanceRoutes = require("./routes/attendance.routes.js");
 
 //middleware to process json and urlencoded data
 app.use(cors());
@@ -48,6 +49,9 @@ app.use("/api/leave", leaveRoutes);
 
 //Job Routes
 app.use("/api/job", jobRoutes);
+
+//Attendance Routes
+app.use("/api/attendance", attendanceRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
