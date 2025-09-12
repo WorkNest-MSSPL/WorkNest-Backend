@@ -13,6 +13,12 @@ const taskRoutes = require("./routes/task.routes.js");
 const visitorRoutes = require("./routes/visitor.routes.js");
 const leaveRoutes = require("./routes/leave.routes.js");
 const jobRoutes = require("./routes/job.routes.js");
+const attendanceRoutes = require("./routes/attendance.routes.js");
+
+const authRoutes = require("./routes/auth.routes");
+const userRoutes = require("./routes/user.routes");
+const rolePermissionRoutes = require("./routes/rolePermission.routes");
+const userPermissionRoutes = require("./routes/userPermission.routes");
 
 //middleware to process json and urlencoded data
 app.use(cors());
@@ -31,6 +37,11 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => res.send("✅ API running!"));
 app.get("/test", (req, res) => res.send("✅ Another route validated!"));
 
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/role-permissions", rolePermissionRoutes);
+app.use("/api/user-permissions", userPermissionRoutes);
+
 //Master Routes
 app.use("/api/master", masterRoutes);
 
@@ -48,6 +59,9 @@ app.use("/api/leave", leaveRoutes);
 
 //Job Routes
 app.use("/api/job", jobRoutes);
+
+//Attendance Routes
+app.use("/api/attendance", attendanceRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
