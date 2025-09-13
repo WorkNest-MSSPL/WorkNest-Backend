@@ -199,9 +199,28 @@ const authController = {
         roleId: user.role_id,
       });
 
+      const newRefreshToken = generateRefreshToken({
+        userId: user.user_id,
+      });
+
+      await pool
+        .request()
+        .input("userId", user.user_id)
+        .input("refreshToken", refreshToken)
+        .input(
+          "refreshTokenExpiry",
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        ).query(`
+          UPDATE auth_user_credentials 
+          SET refresh_token = @refreshToken, 
+              refresh_token_expiry = @refreshTokenExpiry,
+          WHERE user_id = @userId
+        `);
+
       res.json({
         success: true,
         accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
       });
     } catch (error) {
       console.error("Refresh token error:", error);

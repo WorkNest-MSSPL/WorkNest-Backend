@@ -14,6 +14,7 @@ const visitorRoutes = require("./routes/visitor.routes.js");
 const leaveRoutes = require("./routes/leave.routes.js");
 const jobRoutes = require("./routes/job.routes.js");
 const attendanceRoutes = require("./routes/attendance.routes.js");
+const salaryRoutes = require("./routes/salary.routes.js");
 
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
@@ -62,6 +63,9 @@ app.use("/api/job", jobRoutes);
 
 //Attendance Routes
 app.use("/api/attendance", attendanceRoutes);
+
+//Attendance Routes
+app.use("/api/salary", salaryRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
