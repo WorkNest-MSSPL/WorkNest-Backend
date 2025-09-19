@@ -3,7 +3,9 @@ const { getConnection } = require("../../config/database.js");
 const {
   generateAccessToken,
   generateRefreshToken,
-} = require("../../config//jwtUtils.js");
+  verifyAccessToken,
+  verifyRefreshToken,
+} = require("../../config/jwtUtils.js");
 
 const authController = {
   // Login user
@@ -153,7 +155,9 @@ const authController = {
   },
 
   // Refresh token
+  // Refresh token
   refreshToken: async (req, res) => {
+    let pool;
     try {
       const { refreshToken } = req.body;
 
@@ -164,16 +168,16 @@ const authController = {
         });
       }
 
-      const pool = await getConnection();
+      pool = await getConnection();
 
       // Verify refresh token in database
       const userResult = await pool
         .request()
         .input("refreshToken", refreshToken).query(`
-                    SELECT user_id, employee_id, role_id, refresh_token_expiry
-                    FROM auth_user_credentials 
-                    WHERE refresh_token = @refreshToken AND status = 1
-                `);
+        SELECT user_id, employee_id, role_id, refresh_token_expiry
+        FROM auth_user_credentials 
+        WHERE refresh_token = @refreshToken AND status = 1
+      `);
 
       if (userResult.recordset.length === 0) {
         return res.status(403).json({
@@ -192,7 +196,7 @@ const authController = {
         });
       }
 
-      // Generate new access token
+      // Generate new tokens
       const newAccessToken = generateAccessToken({
         userId: user.user_id,
         employeeId: user.employee_id,
@@ -203,19 +207,19 @@ const authController = {
         userId: user.user_id,
       });
 
+      const refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      // Update with new refresh token (FIXED: removed extra comma and used parameterized query)
       await pool
         .request()
         .input("userId", user.user_id)
-        .input("refreshToken", refreshToken)
-        .input(
-          "refreshTokenExpiry",
-          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        ).query(`
-          UPDATE auth_user_credentials 
-          SET refresh_token = @refreshToken, 
-              refresh_token_expiry = @refreshTokenExpiry,
-          WHERE user_id = @userId
-        `);
+        .input("newRefreshToken", newRefreshToken) // FIXED: using new token
+        .input("refreshTokenExpiry", refreshTokenExpiry).query(`
+        UPDATE auth_user_credentials 
+        SET refresh_token = @newRefreshToken, 
+            refresh_token_expiry = @refreshTokenExpiry
+        WHERE user_id = @userId
+      `);
 
       res.json({
         success: true,
@@ -224,10 +228,31 @@ const authController = {
       });
     } catch (error) {
       console.error("Refresh token error:", error);
+
+      // More detailed error logging
+      if (error.message) {
+        console.error("Error message:", error.message);
+      }
+      if (error.code) {
+        console.error("Error code:", error.code);
+      }
+
       res.status(500).json({
         success: false,
         message: "Internal server error",
+        // Remove error details in production, keep for debugging
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       });
+    } finally {
+      // Ensure database connection is closed
+      if (pool) {
+        try {
+          await pool.close();
+        } catch (closeError) {
+          console.error("Error closing connection:", closeError);
+        }
+      }
     }
   },
 
@@ -265,10 +290,57 @@ const authController = {
     }
   },
 
-  // Verify token
+  //Verify token
+  // verifyToken: async (req, res) => {
+  //   try {
+  //     const token = req.headers.authorization?.split(" ")[1];
+
+  //     if (!token) {
+  //       return res.status(401).json({
+  //         success: false,
+  //         message: "Access token required",
+  //       });
+  //     }
+
+  //     const { verifyAccessToken } = require("../utils/jwtUtils");
+  //     const decoded = verifyAccessToken(token);
+
+  //     const pool = await getConnection();
+
+  //     const userResult = await pool.request().input("userId", decoded.userId)
+  //       .query(`
+  //                   SELECT uc.*, em.first_name, em.last_name, em.employee_code, rm.role_name
+  //                   FROM auth_user_credentials uc
+  //                   INNER JOIN E01_employee_master em ON uc.employee_id = em.employee_id
+  //                   INNER JOIN M13_role_master rm ON uc.role_id = rm.role_id
+  //                   WHERE uc.user_id = @userId AND uc.status = 1
+  //               `);
+
+  //     if (userResult.recordset.length === 0) {
+  //       return res.status(403).json({
+  //         success: false,
+  //         message: "User not found or inactive",
+  //       });
+  //     }
+
+  //     res.json({
+  //       success: true,
+  //       user: userResult.recordset[0],
+  //     });
+  //   } catch (error) {
+  //     return res.status(403).json({
+  //       success: false,
+  //       message: "Invalid or expired token",
+  //     });
+  //   }
+  // },
   verifyToken: async (req, res) => {
     try {
-      const token = req.headers.authorization?.split(" ")[1];
+      const rawHeader = req.headers.authorization;
+      console.log("🔹 Authorization header received:", rawHeader);
+
+      const token = rawHeader?.split(" ")[1];
+      console.log("🔹 Extracted token:", token);
 
       if (!token) {
         return res.status(401).json({
@@ -277,19 +349,31 @@ const authController = {
         });
       }
 
-      const { verifyAccessToken } = require("../utils/jwtUtils");
-      const decoded = verifyAccessToken(token);
+      let decoded;
+      try {
+        decoded = verifyAccessToken(token);
+        console.log("✅ Decoded token:", decoded);
+      } catch (err) {
+        console.error("❌ Token verification failed:", err.message);
+        return res.status(403).json({
+          success: false,
+          message: "Invalid or expired token",
+        });
+      }
 
       const pool = await getConnection();
+      console.log("🔹 Running DB query for userId:", decoded.userId);
 
       const userResult = await pool.request().input("userId", decoded.userId)
         .query(`
-                    SELECT uc.*, em.first_name, em.last_name, em.employee_code, rm.role_name
-                    FROM auth_user_credentials uc
-                    INNER JOIN E01_employee_master em ON uc.employee_id = em.employee_id
-                    INNER JOIN M13_role_master rm ON uc.role_id = rm.role_id
-                    WHERE uc.user_id = @userId AND uc.status = 1
-                `);
+        SELECT uc.*, em.first_name, em.last_name, em.employee_code, rm.role_name
+        FROM auth_user_credentials uc
+        INNER JOIN E01_employee_master em ON uc.employee_id = em.employee_id
+        INNER JOIN M13_role_master rm ON uc.role_id = rm.role_id
+        WHERE uc.user_id = @userId AND uc.status = 1
+      `);
+
+      console.log("🔹 Query result:", userResult.recordset);
 
       if (userResult.recordset.length === 0) {
         return res.status(403).json({
@@ -303,6 +387,7 @@ const authController = {
         user: userResult.recordset[0],
       });
     } catch (error) {
+      console.error("❌ Unexpected error in verifyToken:", error.message);
       return res.status(403).json({
         success: false,
         message: "Invalid or expired token",

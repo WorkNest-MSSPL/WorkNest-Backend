@@ -15,6 +15,8 @@ const leaveRoutes = require("./routes/leave.routes.js");
 const jobRoutes = require("./routes/job.routes.js");
 const attendanceRoutes = require("./routes/attendance.routes.js");
 const salaryRoutes = require("./routes/salary.routes.js");
+const performanceRoutes = require("./routes/performance.routes.js");
+const trainingRoutes = require("./routes/training.routes.js");
 
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
@@ -67,6 +69,12 @@ app.use("/api/attendance", attendanceRoutes);
 //Attendance Routes
 app.use("/api/salary", salaryRoutes);
 
+//Attendance Routes
+app.use("/api/performance", performanceRoutes);
+
+//Training Routes
+app.use("/api/training", trainingRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -85,7 +93,7 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const HOST = "192.168.1.53";
+const HOST = "192.168.31.43";
 app.listen(PORT, HOST, () =>
   console.log(`🚀 API started on port  and ${PORT}`)
 );
