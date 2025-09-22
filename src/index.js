@@ -66,7 +66,7 @@ app.use("/api/job", jobRoutes);
 //Attendance Routes
 app.use("/api/attendance", attendanceRoutes);
 
-//Attendance Routes
+//Salary Routes
 app.use("/api/salary", salaryRoutes);
 
 //Attendance Routes

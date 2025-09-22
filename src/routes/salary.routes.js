@@ -10,9 +10,13 @@ const {
 const {
   salaryStructureComponentsOperations,
 } = require("../controller/salary/P03_SalaryStructureComponent.controller.js");
+const {
+  employeeSalaryStructureOperations,
+} = require("../controller/salary/P04_EmployeeSalaryStructure.controller.js");
 
 router.post("/payroll-period", payrollPeriodOperations);
 router.post("/salary-structure", salaryStructureOperations);
 router.post("/salary-structure-component", salaryStructureComponentsOperations);
+router.post("/employee-salary-structure", employeeSalaryStructureOperations);
 
 module.exports = router;
