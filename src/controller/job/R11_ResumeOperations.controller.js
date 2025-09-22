@@ -143,7 +143,111 @@ const resumeOperations = async (req, res) => {
     });
   }
 };
+// get info through application id
+const getResumeById = async (req, res) => {
+  const { application_id } = req.params;
+
+  try {
+    const pool = await getConnection();
+
+    const result = await pool.request()
+      .input("application_id", sql.Int, application_id)
+      .query(`
+        SELECT * FROM R03_job_applications WHERE application_id = @application_id
+      `);
+
+    const resume = result.recordset[0];
+
+    if (!resume) {
+      return res.status(404).json({
+        success: false,
+        message: "Resume not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: resume,
+    });
+  } catch (error) {
+    console.error("Error fetching resume by ID:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+// update 
+const updateResumeById = async (req, res) => {
+  const { application_id } = req.params;
+  const {
+    candidate_name,
+    email,
+    phone,
+    status,
+    currlocation,
+    cover_letter,
+    resume_url
+  } = req.body;
+
+  const allowedStatuses = [
+    "Received",
+    "Shortlisted",
+    "Interview",
+    "Offered",
+    "Rejected",
+    "Hired"
+  ];
+
+  if (status && !allowedStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid status value",
+    });
+  }
+
+  try {
+    const pool = await getConnection();
+
+    await pool.request()
+      .input("application_id", sql.Int, application_id)
+      .input("candidate_name", sql.NVarChar(200), candidate_name || null)
+      .input("email", sql.NVarChar(200), email || null)
+      .input("phone", sql.NVarChar(20), phone || null)
+      .input("status", sql.NVarChar(20), status || null)
+      .input("currlocation", sql.NVarChar(200), currlocation || null)
+      .input("cover_letter", sql.NVarChar(sql.MAX), cover_letter || null)
+      .input("resume_url", sql.NVarChar(500), resume_url || null)
+      .query(`
+        UPDATE R03_job_applications
+        SET
+          candidate_name = ISNULL(@candidate_name, candidate_name),
+          email = ISNULL(@email, email),
+          phone = ISNULL(@phone, phone),
+          status = ISNULL(@status, status),
+          currlocation = ISNULL(@currlocation, currlocation),
+          cover_letter = ISNULL(@cover_letter, cover_letter),
+          resume_url = ISNULL(@resume_url, resume_url),
+          updated_at = GETDATE()
+        WHERE application_id = @application_id
+      `);
+
+    res.status(200).json({
+      success: true,
+      message: "Resume updated successfully "
+    });
+  } catch (error) {
+    console.error("Error updating resume:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 
 module.exports = {
   resumeOperations,
+  getResumeById,
+  updateResumeById
 };

@@ -12,6 +12,8 @@ const jobApplicationsController = require("../controller/job/R03_JobApplications
 const {
   resumeOperations,
 } = require("../controller/job/R11_ResumeOperations.controller.js");
+const { updateResumeById } = require("../controller/job/R11_ResumeOperations.controller.js");
+const { getResumeById } = require("../controller/job/R11_ResumeOperations.controller.js");
 
 router.post("/job-category", jobCategoryOperations);
 router.post("/job-postings", jobPostingsOperations);
@@ -32,8 +34,13 @@ router.post(
 
 router.post(
   "/job-applications/get/:id",
-  jobApplicationsController.getJobApplicationById
+  jobApplicationsController.getJobApplicationById  
 );
 router.post("/resumes/filter", resumeOperations);
+// GET: fetch single resume
+router.get("/resumes/:application_id", getResumeById);
+
+//PUT/update : update resume
+router.put("/resumes/:application_id", updateResumeById);
 
 module.exports = router;
