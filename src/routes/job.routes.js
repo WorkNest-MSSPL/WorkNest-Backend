@@ -9,6 +9,10 @@ const {
 } = require("../controller/job/R02_JobPosting.controller.js");
 const jobApplicationsController = require("../controller/job/R03_JobApplications.controller.js");
 
+const {
+  resumeOperations,
+} = require("../controller/job/R11_ResumeOperations.controller.js");
+
 router.post("/job-category", jobCategoryOperations);
 router.post("/job-postings", jobPostingsOperations);
 router.post(
@@ -30,5 +34,6 @@ router.post(
   "/job-applications/get/:id",
   jobApplicationsController.getJobApplicationById
 );
+router.post("/resumes/filter", resumeOperations);
 
 module.exports = router;
