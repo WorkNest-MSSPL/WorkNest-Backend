@@ -145,6 +145,35 @@ const jobApplicationsController = {
         });
       }
 
+      // ✅ Size validation (before DB operations)
+      if (profile_img) {
+        const imgSizeBytes =
+          (profile_img.length * 3) / 4 -
+          (profile_img.endsWith("==") ? 2 : profile_img.endsWith("=") ? 1 : 0);
+        if (imgSizeBytes > 1 * 1024 * 1024) {
+          return res.status(400).json({
+            success: false,
+            message: "Profile image size must be less than 1 MB",
+          });
+        }
+      }
+
+      if (resumeBase64) {
+        const resumeSizeBytes =
+          (resumeBase64.length * 3) / 4 -
+          (resumeBase64.endsWith("==")
+            ? 2
+            : resumeBase64.endsWith("=")
+            ? 1
+            : 0);
+        if (resumeSizeBytes > 2 * 1024 * 1024) {
+          return res.status(400).json({
+            success: false,
+            message: "Resume size must be less than 2 MB",
+          });
+        }
+      }
+
       const pool = await getConnection();
 
       // Start transaction for data consistency
