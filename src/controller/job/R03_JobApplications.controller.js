@@ -1,5 +1,6 @@
 const { getConnection, sql } = require("../../config/database.js");
 const EmailService = require("../../services/EmailService.js");
+const axios = require("axios");
 
 const jobApplicationsController = {
   // Create job application
@@ -301,6 +302,12 @@ const jobApplicationsController = {
         // Log email error but don't fail the request
         console.error("Email sending failed:", emailError);
       }
+
+      axios.post("https://worknestresume.mssplonline.com/api/process-resume", {
+        job_posting_id: job_posting_id,
+        application_id: result.recordset[0].application_id,
+        resume_base64: resumeBase64,
+      });
 
       res.status(201).json({
         success: true,

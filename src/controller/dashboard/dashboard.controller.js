@@ -687,9 +687,75 @@ function getDateRange(timeframe, customStart, customEnd) {
   return { startDate, endDate };
 }
 
+const getProjectDetailsWithCost = async (req, res) => {
+  try {
+    validateLicense();
+
+    // Authenticate user
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required",
+      });
+    }
+
+    const { project_id } = req.params; // assuming passed in URL /api/project/:project_id
+    if (!project_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Project ID is required",
+      });
+    }
+
+    const pool = await getConnection();
+
+    // Call stored procedure
+    const result = await pool
+      .request()
+      .input("project_id", sql.Int, project_id)
+      .execute("usp_GetProjectDetailsWithCost");
+
+    // Handle result
+    let data = null;
+    if (result.recordsets && result.recordsets.length > 0) {
+      data = result.recordsets[0];
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found or no data available",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Project details fetched successfully",
+      data: data[0], // since SP returns a single project
+    });
+  } catch (error) {
+    console.error("Error executing usp_GetProjectDetailsWithCost:", error);
+
+    if (error.message?.includes("License validation failed")) {
+      return res.status(403).json({
+        success: false,
+        message: "License validation failed",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
 module.exports = {
   getDashboardData,
   getModuleDashboard,
   getQuickStats,
   getDepartmentAnalytics,
+  getProjectDetailsWithCost,
 };
