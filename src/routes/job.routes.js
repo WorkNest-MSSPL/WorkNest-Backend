@@ -15,6 +15,10 @@ const {
   updateResumeStatus,
 } = require("../controller/job/R11_ResumeOperations.controller.js");
 
+const {
+  candidateInterviewsOperations,
+} = require("../controller/job/R07_CandidateInterview.controller.js");
+
 router.post("/job-category", jobCategoryOperations);
 router.post("/job-postings", jobPostingsOperations);
 router.post(
@@ -38,10 +42,11 @@ router.post(
 );
 
 router.post("/resumes", getResumes);
-// GET: fetch single resume
+
 router.get("/resumes/:application_id", getResumeById);
 
-//PUT/update : update resume
 router.post("/resumes/:application_id", updateResumeStatus);
+
+router.post("/interview", candidateInterviewsOperations);
 
 module.exports = router;
