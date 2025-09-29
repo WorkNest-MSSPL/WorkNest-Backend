@@ -4,21 +4,23 @@ const getUserId = () => {
 
 module.exports = { getUserId };
 
-// const { verifyAccessToken } = require("../config/jwtUtils");
+// const { verifyAccessToken } = require("../config/jwtUtils.js");
 
 // const getUserId = (req) => {
 //   try {
-//     const rawHeader = req.headers.authorization;
-//     if (!rawHeader) return null;
+//     const token = req.headers.authorization?.split(" ")[1];
 
-//     const token = rawHeader.split(" ")[1];
-//     if (!token) return null;
+//     if (!token) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Access token required",
+//       });
+//     }
 
+//     // Verify access token
 //     const decoded = verifyAccessToken(token);
 
-//     // You can return either employeeId or userId
-//     return decoded.employeeId; // 🔹 returning employeeId
-//     // return decoded.userId;   // or if you want userId
+//     return decoded ? decoded.employeeId : 15;
 //   } catch (err) {
 //     console.error("Error extracting userId:", err.message);
 //     return null;

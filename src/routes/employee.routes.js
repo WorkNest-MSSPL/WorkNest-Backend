@@ -16,11 +16,15 @@ const {
 const {
   updateEmployeeStatus,
 } = require("../controller/employee/EmployeeStatusUpdate.controller.js");
+const {
+  employeeTransferOperations,
+} = require("../controller/employee/EmployeeTransfer.controller.js");
 
 router.post("/register", registerEmployee);
 router.post("/profile", updateEmployeeProfile);
 router.post("/getById", getEmployeeProfileByCode);
 router.get("/getAll", getAllEmployees);
 router.post("/updateStatus", updateEmployeeStatus);
+router.post("/employee-transfers", employeeTransferOperations);
 
 module.exports = router;

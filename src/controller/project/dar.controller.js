@@ -1,4 +1,5 @@
 const { getConnection, sql } = require("../../config/database.js");
+const { getUserId } = require("../../utils/UserInfo.js");
 
 const darController = {
   /**
@@ -10,6 +11,7 @@ const darController = {
     let transaction;
     try {
       const { report_date, summary, tasks } = req.body;
+      const userId = getUserId();
 
       if (!report_date) {
         return res.status(400).json({
@@ -42,7 +44,7 @@ const darController = {
       // Create DAR
       const darResult = await pool
         .request()
-        .input("employee_id", req.user.employee_id)
+        .input("employee_id", userId)
         .input("report_date", report_date)
         .input("summary", summary || null).query(`
           INSERT INTO T04_dar_master 
@@ -118,16 +120,16 @@ const darController = {
       `;
 
       // If not admin, only show own DARs
-      if (
-        !req.user.roles.includes("Admin") &&
-        !req.user.roles.includes("Manager")
-      ) {
-        whereConditions.push("d.employee_id = @employee_id");
-        request.input("employee_id", req.user.employee_id);
-      } else if (employee_id) {
-        whereConditions.push("d.employee_id = @employee_id");
-        request.input("employee_id", parseInt(employee_id));
-      }
+      // if (
+      //   !req.user.roles.includes("Admin") &&
+      //   !req.user.roles.includes("Manager")
+      // ) {
+      //   whereConditions.push("d.employee_id = @employee_id");
+      //   request.input("employee_id", req.user.employee_id);
+      // } else if (employee_id) {
+      //   whereConditions.push("d.employee_id = @employee_id");
+      //   request.input("employee_id", parseInt(employee_id));
+      // }
 
       if (report_date_from) {
         whereConditions.push("d.report_date >= @report_date_from");
@@ -177,6 +179,7 @@ const darController = {
   getDARById: async (req, res) => {
     try {
       const { id } = req.params;
+      const userId = getUserId();
       const pool = await getConnection();
 
       const darResult = await pool.request().input("dar_id", parseInt(id))
@@ -198,16 +201,16 @@ const darController = {
       }
 
       // Check access rights
-      if (
-        !req.user.roles.includes("Admin") &&
-        !req.user.roles.includes("Manager") &&
-        darResult.recordset[0].employee_id !== req.user.employee_id
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
+      // if (
+      //   !req.user.roles.includes("Admin") &&
+      //   !req.user.roles.includes("Manager") &&
+      //   darResult.recordset[0].employee_id !== userId
+      // ) {
+      //   return res.status(403).json({
+      //     success: false,
+      //     message: "Access denied",
+      //   });
+      // }
 
       // Get DAR tasks
       const tasksResult = await pool.request().input("dar_id", parseInt(id))
@@ -267,6 +270,7 @@ const darController = {
     try {
       const { id } = req.params;
       const updates = req.body;
+      const userId = getUserId();
 
       const pool = await getConnection();
 
@@ -284,22 +288,22 @@ const darController = {
       }
 
       // Check access rights
-      if (
-        !req.user.roles.includes("Admin") &&
-        !req.user.roles.includes("Manager") &&
-        existingDAR.recordset[0].employee_id !== req.user.employee_id
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
+      // if (
+      //   !req.user.roles.includes("Admin") &&
+      //   !req.user.roles.includes("Manager") &&
+      //   existingDAR.recordset[0].employee_id !== req.user.employee_id
+      // ) {
+      //   return res.status(403).json({
+      //     success: false,
+      //     message: "Access denied",
+      //   });
+      // }
 
       // Build dynamic update
       const updateFields = [];
       const request = pool.request();
       request.input("dar_id", parseInt(id));
-      request.input("updated_by", req.user.employee_id);
+      request.input("updated_by", userId);
 
       const allowedFields = ["summary", "status"];
       allowedFields.forEach((field) => {
@@ -366,17 +370,17 @@ const darController = {
       }
 
       // Check access rights
-      if (
-        !req.user.roles.includes("Admin") &&
-        !req.user.roles.includes("Manager") &&
-        existingDAR.recordset[0].employee_id !== req.user.employee_id
-      ) {
-        await transaction.rollback();
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
+      // if (
+      //   !req.user.roles.includes("Admin") &&
+      //   !req.user.roles.includes("Manager") &&
+      //   existingDAR.recordset[0].employee_id !== req.user.employee_id
+      // ) {
+      //   await transaction.rollback();
+      //   return res.status(403).json({
+      //     success: false,
+      //     message: "Access denied",
+      //   });
+      // }
 
       // Delete related records first
       await pool
@@ -425,6 +429,7 @@ const darController = {
     try {
       const { id } = req.params;
       const { comments } = req.body;
+      const userId = getUserId();
 
       if (!comments) {
         return res.status(400).json({
@@ -452,7 +457,7 @@ const darController = {
       await pool
         .request()
         .input("dar_id", parseInt(id))
-        .input("reviewed_by", req.user.employee_id)
+        .input("reviewed_by", userId)
         .input("comments", comments).query(`
           INSERT INTO T06_dar_review_comments 
           (dar_id, reviewed_by, comments)
@@ -463,7 +468,7 @@ const darController = {
       await pool
         .request()
         .input("dar_id", parseInt(id))
-        .input("updated_by", req.user.employee_id)
+        .input("updated_by", userId)
         .query(
           "UPDATE T04_dar_master SET status = 'Reviewed', updated_at = GETDATE(), updated_by = @updated_by WHERE dar_id = @dar_id"
         );

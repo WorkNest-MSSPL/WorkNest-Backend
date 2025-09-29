@@ -1,4 +1,5 @@
 const { getConnection, sql } = require("../../config/database.js");
+const { getUserId } = require("../../utils/UserInfo.js");
 
 const performanceController = {
   /**
@@ -17,6 +18,7 @@ const performanceController = {
         criteria_scores,
       } = req.body;
 
+      const userId = getUserId();
       if (
         !employee_id ||
         !evaluation_period ||
@@ -70,7 +72,7 @@ const performanceController = {
         .input("project_id", project_id ? parseInt(project_id) : null)
         .input("evaluation_period", evaluation_period)
         .input("evaluation_date", evaluation_date)
-        .input("evaluated_by", req.user.employee_id)
+        .input("evaluated_by", userId)
         .input("overall_rating", overallRating.toFixed(2))
         .input("comments", req.body.comments || null).query(`
           INSERT INTO EP01_performance_evaluation 

@@ -1,4 +1,5 @@
 const { getConnection, sql } = require("../../config/database.js");
+const { getUserId } = require("../../utils/UserInfo.js");
 
 const projectMemberController = {
   /**
@@ -11,6 +12,7 @@ const projectMemberController = {
     try {
       const { projectId } = req.params;
       const { members } = req.body;
+      const userId = getUserId();
 
       if (!members || !Array.isArray(members)) {
         return res.status(400).json({
@@ -49,7 +51,7 @@ const projectMemberController = {
             .request()
             .input("employee_id", member.employee_id)
             .query(
-              "SELECT employee_id FROM E01_employee_master WHERE employee_id = @employee_id AND status = 'Active'"
+              "SELECT employee_id FROM E01_employee_master WHERE employee_id = @employee_id AND status = 1"
             );
 
           if (employeeCheck.recordset.length === 0) {
@@ -95,7 +97,7 @@ const projectMemberController = {
             .input("designation_id", member.designation_id)
             .input("role_in_project", member.role_in_project || null)
             .input("hourly_rate", member.hourly_rate || null)
-            .input("created_by", req.user.employee_id).query(`
+            .input("created_by", userId).query(`
               INSERT INTO M26_project_members_heirarchical 
               (project_id, employee_id, designation_id, role_in_project, hourly_rate, created_by)
               OUTPUT INSERTED.member_id, INSERTED.assigned_date
