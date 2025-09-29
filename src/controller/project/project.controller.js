@@ -1,4 +1,5 @@
 const { getConnection, sql } = require("../../config/database.js");
+const { getUserId } = require("../../utils/UserInfo.js");
 
 const projectController = {
   /**
@@ -20,6 +21,8 @@ const projectController = {
         project_manager_id,
         budget_categories,
       } = req.body;
+
+      const userId = getUserId();
 
       if (!project_code || !project_name || !start_date) {
         return res.status(400).json({
@@ -60,7 +63,7 @@ const projectController = {
         .input("total_budget", total_budget || 0)
         .input("allocated_budget", 0)
         .input("project_manager_id", project_manager_id || null)
-        .input("created_by", req.user.employee_id).query(`
+        .input("created_by", userId).query(`
           INSERT INTO M25_project_master 
           (project_code, project_name, description, client_name, start_date, end_date, 
            total_budget, allocated_budget, project_manager_id, created_by)
@@ -373,6 +376,8 @@ const projectController = {
       transaction = new sql.Transaction(pool);
       await transaction.begin();
 
+      const userId = getUserId();
+
       // Check if project exists
       const existingProject = await pool
         .request()
@@ -393,7 +398,7 @@ const projectController = {
       const updateFields = [];
       const request = pool.request();
       request.input("project_id", parseInt(id));
-      request.input("updated_by", req.user.employee_id);
+      request.input("updated_by", userId);
 
       const allowedFields = [
         "project_name",

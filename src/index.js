@@ -28,6 +28,7 @@ const projectRoutes = require("./routes/project/project.routes.js");
 const tasksRoutes = require("./routes/project/task.routes.js");
 const darRoutes = require("./routes/project/dar.routes.js");
 const empperformanceRoutes = require("./routes/project/performance.routes.js");
+const empperformanceCriteriaRoutes = require("./routes/project/performanceCriteria.routes.js");
 
 //middleware to process json and urlencoded data
 app.use(cors());
@@ -89,6 +90,7 @@ app.use("/api/project/management", projectRoutes);
 app.use("/api/project/tasks", tasksRoutes);
 app.use("/api/project/dars", darRoutes);
 app.use("/api/project/performance", empperformanceRoutes);
+app.use("/api/project/performance-criteria", empperformanceCriteriaRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -108,7 +110,7 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const HOST = "192.168.1.70";
+const HOST = "192.168.1.49";
 app.listen(PORT, HOST, () =>
   console.log(`🚀 API started on port  and ${PORT}`)
 );

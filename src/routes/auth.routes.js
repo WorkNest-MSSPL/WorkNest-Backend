@@ -30,4 +30,6 @@ router.post("/logout", authController.logout);
  */
 router.get("/verify", authController.verifyToken);
 
+// router.get("/permissions", authController.getProfile);
+
 module.exports = router;
