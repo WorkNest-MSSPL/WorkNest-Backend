@@ -18,7 +18,7 @@ const performanceController = {
         criteria_scores,
       } = req.body;
 
-      const userId = getUserId();
+      const userId = getUserId(req);
       if (
         !employee_id ||
         !evaluation_period ||

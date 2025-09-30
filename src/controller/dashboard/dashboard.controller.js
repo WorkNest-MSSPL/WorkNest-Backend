@@ -120,8 +120,8 @@ const getDashboardData = async (req, res) => {
          WHERE status = 1) as employees_on_projects,
         
         -- Budget Overview
-        ISNULL(SUM(budget), 0) as total_budget,
-        AVG(CAST(budget as FLOAT)) as avg_project_budget
+        ISNULL(SUM(total_budget), 0) as total_budget,
+        AVG(CAST(total_budget as FLOAT)) as avg_project_budget
       FROM M25_project_master
       WHERE start_date BETWEEN @start_date AND @end_date
     `);
@@ -411,7 +411,7 @@ const getModuleDashboard = async (req, res) => {
             pm.status as project_status,
             pm.start_date,
             pm.end_date,
-            pm.budget,
+            pm.total_budget,
             COUNT(pmem.member_id) as team_size,
             COUNT(tm.task_id) as total_tasks,
             SUM(CASE WHEN tm.status = 'Completed' THEN 1 ELSE 0 END) as completed_tasks,
@@ -423,7 +423,7 @@ const getModuleDashboard = async (req, res) => {
           LEFT JOIN M26_project_members pmem ON pm.project_id = pmem.project_id AND pmem.status = 1
           LEFT JOIN T01_task_master tm ON pm.project_id = tm.project_id
           WHERE pm.start_date BETWEEN @start_date AND @end_date
-          GROUP BY pm.project_id, pm.project_name, pm.status, pm.start_date, pm.end_date, pm.budget
+          GROUP BY pm.project_id, pm.project_name, pm.status, pm.start_date, pm.end_date, pm.total_budget
           ORDER BY pm.start_date DESC
         `;
         break;

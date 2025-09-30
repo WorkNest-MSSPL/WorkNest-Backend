@@ -143,6 +143,18 @@ const leaveBalanceOperations = async (req, res) => {
           } successfully`,
         });
 
+      case 6: // GET ALL BALANCES FOR EMPLOYEE
+        result = await pool.request().query(`
+            SELECT lb.*, lt.leave_type_name, lt.leave_type_code
+            FROM L03_employee_leave_balance lb
+            INNER JOIN M07_leave_type_master lt ON lb.leave_type_id = lt.leave_type_id
+          `);
+
+        return res.json({
+          success: true,
+          data: result.recordset,
+        });
+
       default:
         return res.status(400).json({
           success: false,

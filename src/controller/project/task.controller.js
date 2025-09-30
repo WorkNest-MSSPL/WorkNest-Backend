@@ -1,4 +1,5 @@
 const { getConnection, sql } = require("../../config/database.js");
+const { getUserId } = require("../../utils/UserInfo.js");
 
 const taskController = {
   /**
@@ -25,6 +26,8 @@ const taskController = {
         is_milestone,
         dependencies,
       } = req.body;
+
+      const userId = getUserId(req);
 
       if (!task_code || !title || !project_id || !assigned_to) {
         return res.status(400).json({
@@ -93,7 +96,7 @@ const taskController = {
         .request()
         .input("employee_id", parseInt(assigned_to))
         .query(
-          "SELECT employee_id FROM E01_employee_master WHERE employee_id = @employee_id AND status = 'Active'"
+          "SELECT employee_id FROM E01_employee_master WHERE employee_id = @employee_id AND status = 1"
         );
 
       if (assigneeCheck.recordset.length === 0) {
@@ -149,7 +152,7 @@ const taskController = {
           "parent_task_id",
           parent_task_id ? parseInt(parent_task_id) : null
         )
-        .input("assigned_by", req.user.employee_id)
+        .input("assigned_by", userId)
         .input("assigned_to", parseInt(assigned_to))
         .input("task_type", task_type || "General")
         .input("priority", priority || "Medium")
@@ -159,7 +162,7 @@ const taskController = {
         .input("estimated_hours", estimated_hours || null)
         .input("task_sequence", sequenceResult.recordset[0].next_sequence)
         .input("is_milestone", is_milestone || false)
-        .input("created_by", req.user.employee_id).query(`
+        .input("created_by", userId).query(`
           INSERT INTO T01_task_master_heirarchical 
           (task_code, title, description, project_id, module_id, parent_task_id, 
            assigned_by, assigned_to, task_type, priority, status, start_date, due_date, 
@@ -228,22 +231,23 @@ const taskController = {
       let whereConditions = [];
 
       let query = `
-        SELECT 
-          t.*,
-          p.project_name,
-          p.project_code,
-          assigned_by_emp.first_name + ' ' + ISNULL(assigned_by_emp.last_name, '') as assigned_by_name,
-          assigned_to_emp.first_name + ' ' + ISNULL(assigned_to_emp.last_name, '') as assigned_to_name,
-          parent_task.title as parent_task_title,
-          COUNT(subtasks.task_id) as subtask_count,
-          SUM(CASE WHEN subtasks.status = 'Completed' THEN 1 ELSE 0 END) as completed_subtasks
-        FROM T01_task_master_heirarchical t
-        INNER JOIN M25_project_master p ON t.project_id = p.project_id
-        INNER JOIN E01_employee_master assigned_by_emp ON t.assigned_by = assigned_by_emp.employee_id
-        INNER JOIN E01_employee_master assigned_to_emp ON t.assigned_to = assigned_to_emp.employee_id
-        LEFT JOIN T01_task_master_heirarchical parent_task ON t.parent_task_id = parent_task.task_id
-        LEFT JOIN T01_task_master_heirarchical subtasks ON t.task_id = subtasks.parent_task_id
-      `;
+      SELECT 
+        t.*,
+        p.project_name,
+        p.project_code,
+        assigned_by_emp.first_name + ' ' + ISNULL(assigned_by_emp.last_name, '') as assigned_by_name,
+        assigned_to_emp.first_name + ' ' + ISNULL(assigned_to_emp.last_name, '') as assigned_to_name,
+        parent_task.title as parent_task_title,
+        COUNT(subtasks.task_id) OVER (PARTITION BY t.task_id) as subtask_count,
+        SUM(CASE WHEN subtasks.status = 'Completed' THEN 1 ELSE 0 END) 
+          OVER (PARTITION BY t.task_id) as completed_subtasks
+      FROM T01_task_master_heirarchical t
+      INNER JOIN M25_project_master p ON t.project_id = p.project_id
+      INNER JOIN E01_employee_master assigned_by_emp ON t.assigned_by = assigned_by_emp.employee_id
+      INNER JOIN E01_employee_master assigned_to_emp ON t.assigned_to = assigned_to_emp.employee_id
+      LEFT JOIN T01_task_master_heirarchical parent_task ON t.parent_task_id = parent_task.task_id
+      LEFT JOIN T01_task_master_heirarchical subtasks ON t.task_id = subtasks.parent_task_id
+    `;
 
       if (project_id) {
         whereConditions.push("t.project_id = @project_id");
@@ -278,15 +282,7 @@ const taskController = {
         query += " WHERE " + whereConditions.join(" AND ");
       }
 
-      query +=
-        " GROUP BY t.task_id, t.task_code, t.title, t.description, t.project_id, " +
-        "t.module_id, t.parent_task_id, t.assigned_by, t.assigned_to, t.task_type, " +
-        "t.priority, t.status, t.start_date, t.due_date, t.estimated_hours, " +
-        "t.actual_hours, t.completion_percentage, t.task_sequence, t.is_milestone, " +
-        "t.created_at, t.updated_at, p.project_name, p.project_code, " +
-        "assigned_by_emp.first_name, assigned_by_emp.last_name, " +
-        "assigned_to_emp.first_name, assigned_to_emp.last_name, parent_task.title " +
-        "ORDER BY t.task_sequence, t.created_at";
+      query += " ORDER BY t.task_sequence, t.created_at";
 
       const result = await request.query(query);
 
@@ -410,6 +406,7 @@ const taskController = {
     try {
       const { id } = req.params;
       const updates = req.body;
+      const userId = getUserId(req);
 
       const pool = await getConnection();
 
@@ -432,7 +429,7 @@ const taskController = {
       const updateFields = [];
       const request = pool.request();
       request.input("task_id", parseInt(id));
-      request.input("updated_by", req.user.employee_id);
+      request.input("updated_by", userId);
 
       const allowedFields = [
         "title",
@@ -496,6 +493,8 @@ const taskController = {
       const { id } = req.params;
       const pool = await getConnection();
 
+      const userId = getUserId(req);
+
       // Check if task exists
       const existingTask = await pool
         .request()
@@ -531,7 +530,7 @@ const taskController = {
       await pool
         .request()
         .input("task_id", parseInt(id))
-        .input("updated_by", req.user.employee_id)
+        .input("updated_by", userId)
         .query(
           "UPDATE T01_task_master_heirarchical SET status = 'Deleted', updated_at = GETDATE(), updated_by = @updated_by WHERE task_id = @task_id"
         );

@@ -98,20 +98,28 @@ const leaveRequestOperations = async (req, res) => {
         });
 
       case 3: // GET LEAVE REQUEST BY ID
-        result = await pool.request().input("request_id", sql.Int, request_id)
-          .query(`
-            SELECT lr.*, 
-                   e.first_name, e.last_name, e.employee_code,
-                   lt.leave_type_name, lt.leave_type_code
-            FROM L04_leave_requests lr
-            INNER JOIN E01_employee_master e ON lr.employee_id = e.employee_id
-            INNER JOIN M07_leave_type_master lt ON lr.leave_type_id = lt.leave_type_id
-            WHERE lr.request_id = @request_id
-          `);
+        let query = `
+          SELECT lr.*, 
+                e.first_name, e.last_name, e.employee_code,
+                lt.leave_type_name, lt.leave_type_code
+          FROM L04_leave_requests lr
+          INNER JOIN E01_employee_master e ON lr.employee_id = e.employee_id
+          INNER JOIN M07_leave_type_master lt ON lr.leave_type_id = lt.leave_type_id
+        `;
+
+        if (request_id !== -1) {
+          query += ` WHERE lr.request_id = @request_id`;
+        }
+
+        const result = await pool
+          .request()
+          .input("request_id", sql.Int, request_id)
+          .query(query);
 
         return res.json({
           success: true,
-          data: result.recordset[0] || null,
+          data:
+            request_id === -1 ? result.recordset : result.recordset[0] || null,
         });
 
       case 4: // GET LEAVE REQUESTS BY EMPLOYEE
