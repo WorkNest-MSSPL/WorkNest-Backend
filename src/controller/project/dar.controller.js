@@ -11,7 +11,7 @@ const darController = {
     let transaction;
     try {
       const { report_date, summary, tasks } = req.body;
-      const userId = getUserId();
+      const userId = getUserId(req);
 
       if (!report_date) {
         return res.status(400).json({
@@ -27,7 +27,7 @@ const darController = {
       // Check if DAR already exists for the date and employee
       const existingDAR = await pool
         .request()
-        .input("employee_id", req.user.employee_id)
+        .input("employee_id", userId)
         .input("report_date", report_date)
         .query(
           "SELECT dar_id FROM T04_dar_master WHERE employee_id = @employee_id AND report_date = @report_date"
@@ -179,7 +179,7 @@ const darController = {
   getDARById: async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = getUserId();
+      const userId = getUserId(req);
       const pool = await getConnection();
 
       const darResult = await pool.request().input("dar_id", parseInt(id))
@@ -270,7 +270,7 @@ const darController = {
     try {
       const { id } = req.params;
       const updates = req.body;
-      const userId = getUserId();
+      const userId = getUserId(req);
 
       const pool = await getConnection();
 
@@ -429,7 +429,7 @@ const darController = {
     try {
       const { id } = req.params;
       const { comments } = req.body;
-      const userId = getUserId();
+      const userId = getUserId(req);
 
       if (!comments) {
         return res.status(400).json({

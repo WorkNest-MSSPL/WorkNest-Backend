@@ -12,7 +12,7 @@ const projectMemberController = {
     try {
       const { projectId } = req.params;
       const { members } = req.body;
-      const userId = getUserId();
+      const userId = getUserId(req);
 
       if (!members || !Array.isArray(members)) {
         return res.status(400).json({

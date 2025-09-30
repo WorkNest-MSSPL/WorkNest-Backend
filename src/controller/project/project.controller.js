@@ -22,7 +22,7 @@ const projectController = {
         budget_categories,
       } = req.body;
 
-      const userId = getUserId();
+      const userId = getUserId(req);
 
       if (!project_code || !project_name || !start_date) {
         return res.status(400).json({
@@ -376,7 +376,7 @@ const projectController = {
       transaction = new sql.Transaction(pool);
       await transaction.begin();
 
-      const userId = getUserId();
+      const userId = getUserId(req);
 
       // Check if project exists
       const existingProject = await pool
