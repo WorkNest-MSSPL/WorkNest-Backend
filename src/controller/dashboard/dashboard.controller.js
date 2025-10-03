@@ -60,7 +60,7 @@ const getDashboardData = async (req, res) => {
         
         (SELECT COUNT(*) FROM R02_job_postings 
          WHERE posted_date BETWEEN @start_date AND @end_date) as new_job_postings,
-        
+         
         (SELECT COUNT(*) FROM R02_job_postings 
          WHERE status = 'Open') as active_jobs,
         
@@ -456,27 +456,28 @@ const getModuleDashboard = async (req, res) => {
       case "hiring":
         query = `
           SELECT 
-            jp.job_posting_id,
-            jp.job_title,
-            jp.department_id,
-            dm.department_name,
-            jp.employment_type,
-            jp.status as job_status,
-            COUNT(ja.application_id) as application_count,
-            SUM(CASE WHEN ja.status = 'Hired' THEN 1 ELSE 0 END) as hired_count,
-            SUM(CASE WHEN ja.status = 'Interview' THEN 1 ELSE 0 END) as interview_count,
-            AVG(r.ats_score) as avg_ats_score,
-            (SELECT COUNT(*) FROM R07_candidate_interviews ci 
-             WHERE ci.application_id = ja.application_id) as interviews_conducted
+              jp.job_posting_id,
+              jp.job_title,
+              jp.department_id,
+              dm.department_name,
+              jp.employment_type,
+              jp.status as job_status,
+              COUNT(ja.application_id) as application_count,
+              SUM(CASE WHEN ja.status = 'Hired' THEN 1 ELSE 0 END) as hired_count,
+              SUM(CASE WHEN ja.status = 'Interview' THEN 1 ELSE 0 END) as interview_count,
+              AVG(r.ats_score) as avg_ats_score,
+              COUNT(ci.interview_id) as interviews_conducted
           FROM R02_job_postings jp
           LEFT JOIN R03_job_applications ja ON jp.job_posting_id = ja.job_posting_id
           LEFT JOIN R11_resumes r ON ja.application_id = r.application_id
           LEFT JOIN M02_department_master dm ON jp.department_id = dm.department_id
+          LEFT JOIN R07_candidate_interviews ci ON ja.application_id = ci.application_id
           WHERE jp.posted_date BETWEEN @start_date AND @end_date
           ${department_id ? " AND jp.department_id = @department_id" : ""}
-          GROUP BY jp.job_posting_id, jp.job_title, jp.department_id, dm.department_name, 
-                   jp.employment_type, jp.status
-          ORDER BY application_count DESC
+          GROUP BY 
+              jp.job_posting_id, jp.job_title, jp.department_id, 
+              dm.department_name, jp.employment_type, jp.status
+          ORDER BY application_count DESC;
         `;
         break;
 
@@ -578,25 +579,27 @@ const getModuleDashboard = async (req, res) => {
       case "dar":
         query = `
           SELECT 
-            dm.dar_id,
-            dm.report_date,
-            dm.status as dar_status,
-            dm.summary,
-            em.first_name + ' ' + ISNULL(em.last_name, '') as employee_name,
-            dm.department_name,
-            COUNT(dt.dar_task_id) as total_tasks,
-            SUM(dt.hours_spent) as total_hours,
-            AVG(CAST(dt.progress_percentage as FLOAT)) as avg_progress,
-            (SELECT COUNT(*) FROM T06_dar_review_comments drc 
-             WHERE drc.dar_id = dm.dar_id) as review_count
+              dm.dar_id,
+              dm.report_date,
+              dm.status AS dar_status,
+              dm.summary,
+              em.first_name + ' ' + ISNULL(em.last_name, '') AS employee_name,
+              dept.department_name,
+              COUNT(DISTINCT dt.dar_task_id) AS total_tasks,
+              SUM(ISNULL(dt.hours_spent,0)) AS total_hours,
+              AVG(CAST(ISNULL(dt.progress_percentage,0) AS FLOAT)) AS avg_progress,
+              COUNT(DISTINCT drc.review_id) AS review_count
           FROM T04_dar_master dm
           LEFT JOIN E01_employee_master em ON dm.employee_id = em.employee_id
+          LEFT JOIN M02_department_master dept ON em.department_id = dept.department_id
           LEFT JOIN T05_dar_tasks dt ON dm.dar_id = dt.dar_id
+          LEFT JOIN T06_dar_review_comments drc ON dm.dar_id = drc.dar_id
           WHERE dm.report_date BETWEEN @start_date AND @end_date
           ${department_id ? " AND em.department_id = @department_id" : ""}
-          GROUP BY dm.dar_id, dm.report_date, dm.status, dm.summary, 
-                   em.first_name, em.last_name, dm.department_name
-          ORDER BY dm.report_date DESC
+          GROUP BY 
+              dm.dar_id, dm.report_date, dm.status, dm.summary, 
+              em.first_name, em.last_name, dept.department_name
+          ORDER BY dm.report_date DESC;
         `;
         break;
 
