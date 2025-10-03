@@ -111,7 +111,7 @@ const leaveRequestOperations = async (req, res) => {
           query += ` WHERE lr.request_id = @request_id`;
         }
 
-        const result = await pool
+        result = await pool
           .request()
           .input("request_id", sql.Int, request_id)
           .query(query);
