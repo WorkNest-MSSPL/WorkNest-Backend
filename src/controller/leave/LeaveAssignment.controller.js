@@ -181,6 +181,96 @@ const leaveAssignmentOperations = async (req, res) => {
           errors: errors.length > 0 ? errors : undefined,
         });
 
+      case 6: // GET ASSIGNMENTS BY EMPLOYEE
+        result = await pool.request().query(`
+            SELECT la.*, 
+                   lt.leave_type_name, lt.leave_type_code,
+                   lp.policy_name, lp.accrual_frequency
+            FROM L10_leave_type_assignment la
+            INNER JOIN M07_leave_type_master lt ON la.leave_type_id = lt.leave_type_id
+            INNER JOIN L01_leave_policy lp ON la.policy_id = lp.policy_id
+          `);
+
+        return res.json({
+          success: true,
+          data: result.recordset,
+        });
+
+      case 7: // UPDATE LEAVE POLICY ASSIGNMENT
+        try {
+          const { assignment_id, employee_id, leave_type_id, policy_id } =
+            req.body;
+
+          if (!assignment_id || !employee_id || !leave_type_id || !policy_id) {
+            return res.status(400).json({
+              success: false,
+              message:
+                "Assignment ID, employee ID, leave type ID, and policy ID are required",
+            });
+          }
+
+          // Check if assignment exists
+          const checkAssignment = await pool
+            .request()
+            .input("assignment_id", sql.Int, assignment_id).query(`
+        SELECT * FROM L10_leave_type_assignment WHERE assignment_id = @assignment_id
+      `);
+
+          if (checkAssignment.recordset.length === 0) {
+            return res.status(404).json({
+              success: false,
+              message: "Leave policy assignment not found",
+            });
+          }
+
+          // Check if the new combination already exists for another record
+          const duplicateCheck = await pool
+            .request()
+            .input("assignment_id", sql.Int, assignment_id)
+            .input("employee_id", sql.Int, employee_id)
+            .input("leave_type_id", sql.Int, leave_type_id).query(`
+        SELECT * FROM L10_leave_type_assignment 
+        WHERE employee_id = @employee_id AND leave_type_id = @leave_type_id 
+        AND assignment_id <> @assignment_id
+      `);
+
+          if (duplicateCheck.recordset.length > 0) {
+            return res.status(400).json({
+              success: false,
+              message:
+                "This leave type is already assigned to the employee under another assignment",
+            });
+          }
+
+          // Perform update
+          const result = await pool
+            .request()
+            .input("assignment_id", sql.Int, assignment_id)
+            .input("employee_id", sql.Int, employee_id)
+            .input("leave_type_id", sql.Int, leave_type_id)
+            .input("policy_id", sql.Int, policy_id).query(`
+        UPDATE L10_leave_type_assignment
+        SET employee_id = @employee_id,
+            leave_type_id = @leave_type_id,
+            policy_id = @policy_id,
+            assigned_on = GETDATE()
+        OUTPUT INSERTED.*
+        WHERE assignment_id = @assignment_id
+      `);
+
+          return res.status(200).json({
+            success: true,
+            message: "Leave policy assignment updated successfully",
+            data: result.recordset[0],
+          });
+        } catch (err) {
+          console.error("Error updating leave policy assignment:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+          });
+        }
+
       default:
         return res.status(400).json({
           success: false,

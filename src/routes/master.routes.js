@@ -81,6 +81,9 @@ const {
 const {
   skillOperations,
 } = require("../controller/master/R05_SkillMaster.controller.js");
+const {
+  formPermissionController,
+} = require("../controller/master/FormPermission.controller.js");
 
 router.post("/company", companyOperations);
 router.post("/department", departmentOperations);
@@ -110,5 +113,10 @@ router.post("/beat", beatOperations);
 router.post("/project", projectMasterOperations);
 router.post("/projectMembers", projectMembersOperations);
 router.post("/skills", skillOperations);
+
+router.post("/form", formPermissionController.createForm); // Create form with bulk fields
+router.get("/form", formPermissionController.getForms); // Get all forms with fields
+router.put("/form/:id", formPermissionController.updateForm); // Update form fields
+router.delete("/form/:id", formPermissionController.deleteForm); // Delete form and its fields
 
 module.exports = router;
