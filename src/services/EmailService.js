@@ -153,7 +153,7 @@ class EmailService {
   getOfferLetterTemplate(offerData, candidateData, jobDetails) {
     const formattedSalary = new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
     }).format(offerData.offered_salary);
 
     const formattedDate = new Date(offerData.offer_date).toLocaleDateString(
