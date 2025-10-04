@@ -14,7 +14,7 @@ const offerLettersOperations = async (req, res) => {
     offer_date,
     acceptance_status,
     document_url,
-    send_email = true, // New parameter to control email sending
+    send_email = true,
   } = req.body;
 
   try {
@@ -48,27 +48,49 @@ const offerLettersOperations = async (req, res) => {
     let data = null;
     let statusCode = 200;
 
+    // Handle multiple result sets from stored procedure
     if (result.recordsets && result.recordsets.length > 0) {
-      const firstRecordset = result.recordsets[0];
-      if (firstRecordset.length > 0) {
-        const firstRow = firstRecordset[0];
+      const operationType = parseInt(type);
 
-        if (
-          firstRow.hasOwnProperty("isSuccess") &&
-          firstRow.hasOwnProperty("message")
-        ) {
+      // For INSERT operations (type=1), data is in the second result set
+      if (operationType === 1 && result.recordsets.length > 1) {
+        const firstRecordset = result.recordsets[0];
+        const secondRecordset = result.recordsets[1];
+
+        if (firstRecordset.length > 0) {
+          const firstRow = firstRecordset[0];
           success = Boolean(firstRow.isSuccess);
           message = firstRow.message || "";
-        } else {
-          success = true;
-          data = firstRecordset;
-        }
 
-        if (
-          [3, 4, 5].includes(parseInt(type)) &&
-          result.recordsets.length > 0
-        ) {
-          data = result.recordsets[0];
+          // Get offer data from second result set for email
+          if (success && secondRecordset.length > 0) {
+            data = secondRecordset;
+          }
+        }
+      }
+      // For other operations, use standard logic
+      else {
+        const firstRecordset = result.recordsets[0];
+        if (firstRecordset.length > 0) {
+          const firstRow = firstRecordset[0];
+
+          if (
+            firstRow.hasOwnProperty("isSuccess") &&
+            firstRow.hasOwnProperty("message")
+          ) {
+            success = Boolean(firstRow.isSuccess);
+            message = firstRow.message || "";
+          } else {
+            success = true;
+            data = firstRecordset;
+          }
+
+          if (
+            [3, 4, 5].includes(operationType) &&
+            result.recordsets.length > 0
+          ) {
+            data = result.recordsets[0];
+          }
         }
       }
     }
@@ -81,7 +103,7 @@ const offerLettersOperations = async (req, res) => {
     if (parseInt(type) === 1 && success) {
       statusCode = 201;
 
-      // Send offer letter email for new offers
+      // Send offer letter email for new offers - FIXED: Use correct data
       if (send_email && data && data.length > 0) {
         await sendOfferLetterEmail(data[0]);
       }
@@ -176,7 +198,6 @@ const offerLettersOperations = async (req, res) => {
   }
 };
 
-// Helper function to send offer letter email
 async function sendOfferLetterEmail(offerData) {
   try {
     // Fetch candidate and job details from database
@@ -184,12 +205,12 @@ async function sendOfferLetterEmail(offerData) {
     const candidateResult = await pool
       .request()
       .input("offer_id", sql.Int, offerData.offer_id).query(`
-        SELECT a.candidate_name, a.email, a.phone, p.job_title, 
-               c.company_name, c.company_address, c.contact_email, c.contact_phone
+        SELECT a.candidate_name, a.email, a.phone, p.job_title,
+               c.company_name, c.address, c.email, c.phone
         FROM R08_offer_letters o
         INNER JOIN R03_job_applications a ON o.application_id = a.application_id
         INNER JOIN R02_job_postings p ON a.job_posting_id = p.job_posting_id
-        INNER JOIN R01_companies c ON p.company_id = c.company_id
+        INNER JOIN M01_company_master c ON p.company_id = c.company_id
         WHERE o.offer_id = @offer_id
       `);
 
@@ -251,11 +272,11 @@ async function sendOfferStatusUpdateEmail(offerData, newStatus) {
       .input("offer_id", sql.Int, offerData.offer_id).query(`
         SELECT o.acceptance_status as old_status, 
                a.candidate_name, a.email, p.job_title,
-               c.company_name, c.contact_email
+               c.company_name, c.email
         FROM R08_offer_letters o
         INNER JOIN R03_job_applications a ON o.application_id = a.application_id
         INNER JOIN R02_job_postings p ON a.job_posting_id = p.job_posting_id
-        INNER JOIN R01_companies c ON p.company_id = c.company_id
+        INNER JOIN M01_company_master c ON p.company_id = c.company_id
         WHERE o.offer_id = @offer_id
       `);
 
