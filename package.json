@@ -8,6 +8,10 @@
     "prep": "node lc.obf.js",
     "start": "node dist/bundle.js",
     "dev": "nodemon src/index.js",
+<<<<<<< HEAD
+=======
+    "swagger": "node generate-swagger.js",
+>>>>>>> main
     "build": "esbuild src/index.js --bundle --platform=node --outfile=dist/bundle.js",
     "generate-license": "node license-generator.js",
     "obfuscate": "npx javascript-obfuscator checker.js --output checker.obf.js --compact true --self-defending true --control-flow-flattening true"
@@ -20,14 +24,25 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
+<<<<<<< HEAD
     "dotenv": "^17.2.1",
+=======
+    "dotenv": "^17.2.3",
+>>>>>>> main
     "esbuild": "^0.25.9",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "mssql": "^11.0.1",
     "node-machine-id": "^1.1.12",
+<<<<<<< HEAD
     "nodemailer": "^7.0.6"
+=======
+    "nodemailer": "^7.0.6",
+    "swagger-autogen": "^2.23.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+>>>>>>> main
   },
   "devDependencies": {
     "javascript-obfuscator": "^4.1.1",

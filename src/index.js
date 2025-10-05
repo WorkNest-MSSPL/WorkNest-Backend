@@ -6,6 +6,13 @@ const { validateLicense } = require(path.join(__dirname, "checker.obf"));
 // obfuscated function
 const app = express();
 
+<<<<<<< HEAD
+=======
+// Swagger setup
+// const swaggerUi = require('swagger-ui-express');
+// const swaggerDocument = require('./config/swagger-output.json');
+
+>>>>>>> main
 //Import Routes
 const masterRoutes = require("./routes/master.routes.js");
 const employeeRoutes = require("./routes/employee.routes.js");
@@ -30,6 +37,12 @@ const darRoutes = require("./routes/project/dar.routes.js");
 const empperformanceRoutes = require("./routes/project/performance.routes.js");
 const empperformanceCriteriaRoutes = require("./routes/project/performanceCriteria.routes.js");
 
+<<<<<<< HEAD
+=======
+// Payroll Routes
+const payrollRoutes = require("./routes/payroll.routes.js");
+
+>>>>>>> main
 //middleware to process json and urlencoded data
 const corsOptions = {
   origin: "*", // Allow all origins
@@ -53,6 +66,12 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => res.send("✅ API running!"));
 app.get("/test", (req, res) => res.send("✅ Another route validated!"));
 
+<<<<<<< HEAD
+=======
+// Swagger Documentation
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+>>>>>>> main
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/role-permissions", rolePermissionRoutes);
@@ -98,6 +117,12 @@ app.use("/api/project/dars", darRoutes);
 app.use("/api/project/performance", empperformanceRoutes);
 app.use("/api/project/performance-criteria", empperformanceCriteriaRoutes);
 
+<<<<<<< HEAD
+=======
+//Payroll Management Routes
+app.use("/api/payroll", payrollRoutes);
+
+>>>>>>> main
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -116,8 +141,13 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+<<<<<<< HEAD
 const HOST = "192.168.1.49";
 app.listen(PORT, HOST, () =>
+=======
+// const HOST = "192.168.1.49";
+app.listen(PORT, () =>
+>>>>>>> main
   console.log(`🚀 API started on port  and ${PORT}`)
 );
 
