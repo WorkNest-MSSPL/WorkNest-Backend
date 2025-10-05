@@ -1,0 +1,30 @@
+const express = require("express");
+const router = express.Router();
+
+const {
+  registerEmployee,
+} = require("../controller/employee/EmployeeRegistration.controller.js");
+const {
+  updateEmployeeProfile,
+} = require("../controller/employee/EmployeeProfileUpdate.controller.js");
+const {
+  getEmployeeProfileByCode,
+} = require("../controller/employee/GetEmpByID.controller.js");
+const {
+  getAllEmployees,
+} = require("../controller/employee/GetAllEmployee.controller.js");
+const {
+  updateEmployeeStatus,
+} = require("../controller/employee/EmployeeStatusUpdate.controller.js");
+const {
+  employeeTransferOperations,
+} = require("../controller/employee/EmployeeTransfer.controller.js");
+
+router.post("/register", registerEmployee);
+router.post("/profile", updateEmployeeProfile);
+router.post("/getById", getEmployeeProfileByCode);
+router.get("/getAll", getAllEmployees);
+router.post("/updateStatus", updateEmployeeStatus);
+router.post("/employee-transfers", employeeTransferOperations);
+
+module.exports = router;
