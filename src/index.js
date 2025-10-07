@@ -130,9 +130,7 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 3000;
 // const HOST = "192.168.1.49";
-app.listen(PORT, () =>
-  console.log(`🚀 API started on port  and ${PORT}`)
-);
+app.listen(PORT, () => console.log(`🚀 API started on port  and ${PORT}`));
 
 // const PORT = process.env.PORT || 3000;
 // app.listen(PORT, () => console.log(`🚀 API started on port ${PORT}`));
