@@ -2,16 +2,47 @@ const express = require("express");
 const router = express.Router();
 
 // Import all payroll controllers
-const { salaryComponentOperations } = require("../controller/payroll/salaryComponent.controller");
-const { salaryTemplateOperations } = require("../controller/payroll/salaryTemplate.controller");
-const { templateComponentOperations } = require("../controller/payroll/templateComponent.controller");
-const { employeeSalaryOperations } = require("../controller/payroll/employeeSalary.controller");
-const { payrollCycleOperations } = require("../controller/payroll/payrollCycle.controller");
-const { payrollTransactionOperations } = require("../controller/payroll/payrollTransaction.controller");
-const { payrollComponentsOperations } = require("../controller/payroll/payrollComponents.controller");
+const {
+  salaryComponentOperations,
+} = require("../controller/payroll/salaryComponent.controller");
+const {
+  salaryTemplateOperations,
+} = require("../controller/payroll/salaryTemplate.controller");
+const {
+  templateComponentOperations,
+} = require("../controller/payroll/templateComponent.controller");
+const {
+  employeeSalaryOperations,
+} = require("../controller/payroll/employeeSalary.controller");
+const {
+  payrollCycleOperations,
+} = require("../controller/payroll/payrollCycle.controller");
+const {
+  payrollTransactionOperations,
+} = require("../controller/payroll/payrollTransaction.controller");
+const {
+  payrollComponentsOperations,
+} = require("../controller/payroll/payrollComponents.controller");
 const { loanOperations } = require("../controller/payroll/loan.controller");
-const { reimbursementOperations } = require("../controller/payroll/reimbursement.controller");
-const { taxDeclarationOperations } = require("../controller/payroll/taxDeclaration.controller");
+const {
+  reimbursementOperations,
+} = require("../controller/payroll/reimbursement.controller");
+const {
+  taxDeclarationOperations,
+} = require("../controller/payroll/taxDeclaration.controller");
+const {
+  requestCategoryOperations,
+} = require("../controller/payroll/requestCategory.controller");
+const {
+  workflowMasterOperations,
+} = require("../controller/payroll/workflow.controller");
+const {
+  employeeApproverOperations,
+} = require("../controller/payroll/empApprover.controller");
+const {
+  employeeRequestOperations,
+} = require("../controller/payroll/empRequest.controller");
+
 // ============================================================================
 // SALARY STRUCTURE ROUTES
 // ============================================================================
@@ -70,5 +101,17 @@ router.post("/reimbursement", reimbursementOperations);
 // #swagger.tags = ['Tax Declaration']
 // #swagger.description = 'Tax Declaration Operations: Type 1=Create/Update, 3=GetAll'
 router.post("/tax-declaration", taxDeclarationOperations);
+
+// Request Category Routes
+router.post("/request-categories", requestCategoryOperations);
+
+// Workflow Master Routes
+router.post("/request-workflows", workflowMasterOperations);
+
+// Employee Approver Mapping Routes
+router.post("/request-approvers", employeeApproverOperations);
+
+// Employee Request Routes
+router.post("/requests", employeeRequestOperations);
 
 module.exports = router;

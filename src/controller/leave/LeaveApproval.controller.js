@@ -136,9 +136,28 @@ const leaveApprovalOperations = async (req, res) => {
             INNER JOIN E01_employee_master e ON lr.employee_id = e.employee_id
             INNER JOIN M07_leave_type_master lt ON lr.leave_type_id = lt.leave_type_id
             LEFT JOIN M02_department_master d ON e.department_id = d.department_id
-            WHERE la.approver_id = @approver_id 
-            AND la.approval_status = 'Pending'
+            WHERE la.approval_status = 'Pending'
             AND lr.status = 'Pending'
+            ORDER BY la.approval_level, lr.created_at
+          `);
+
+        return res.json({
+          success: true,
+          data: result.recordset,
+        });
+
+      case 5: // GET PENDING APPROVALS FOR APPROVER
+        result = await pool.request().input("approver_id", sql.Int, approver_id)
+          .query(`
+            SELECT la.*, lr.*, 
+                   e.first_name, e.last_name, e.employee_code,
+                   lt.leave_type_name, d.department_name
+            FROM L05_leave_approvals la
+            INNER JOIN L04_leave_requests lr ON la.request_id = lr.request_id
+            INNER JOIN E01_employee_master e ON lr.employee_id = e.employee_id
+            INNER JOIN M07_leave_type_master lt ON lr.leave_type_id = lt.leave_type_id
+            LEFT JOIN M02_department_master d ON e.department_id = d.department_id
+            WHERE la.approval_status <> 'Pending'
             ORDER BY la.approval_level, lr.created_at
           `);
 
