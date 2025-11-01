@@ -34,6 +34,8 @@ const darRoutes = require("./routes/project/dar.routes.js");
 const empperformanceRoutes = require("./routes/project/performance.routes.js");
 const empperformanceCriteriaRoutes = require("./routes/project/performanceCriteria.routes.js");
 
+const chatbotRoutes = require("./routes/chatbot.routes.js");
+
 // Payroll Routes
 const payrollRoutes = require("./routes/payroll.routes.js");
 
@@ -111,6 +113,9 @@ app.use("/api/project/performance-criteria", empperformanceCriteriaRoutes);
 //Payroll Management Routes
 app.use("/api/payroll", payrollRoutes);
 
+//chatbot Routes
+app.use("/api/chatbot", chatbotRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -129,7 +134,7 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-// const HOST = "192.168.1.49";
+// const HOST = "192.168.1.94";
 app.listen(PORT, () => console.log(`🚀 API started on port  and ${PORT}`));
 
 // const PORT = process.env.PORT || 3000;
